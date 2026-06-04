@@ -15,26 +15,38 @@ public class ClientDownload {
     private static final Path DOWNLOAD_DIR = Paths.get("downloads");
 
     public void downloadFile(FileServiceGrpc.FileServiceBlockingStub blockingStub,
-                         String remoteName, String localPath) throws Exception {
+                         final String remoteName, final String localPath) throws Exception {
 
-        FileRequest req = FileRequest.newBuilder()
+        final FileRequest fileRequest = FileRequest.newBuilder()
                 .setFilename(remoteName)
                 .setPath(DOWNLOAD_DIR.toString())
                 .build();
 
-        Iterator<FileChunk> chunks = blockingStub.download(req);
+        final Iterator<FileChunk> chunksIt = blockingStub.download(fileRequest);
 
-        Path outputPath = DOWNLOAD_DIR.resolve(localPath);
+        try {
+            downloadFile(localPath, chunksIt);
+        } catch (Exception e) {
+            throw new RuntimeException("Download failed due to " + e.getMessage(), e);
+        }
+    }
+
+    private Path resolveFilePath(final String localPath) {
+        return DOWNLOAD_DIR.resolve(localPath);
+    }
+    
+    private void downloadFile( final String localPath, final Iterator<FileChunk> chunksIt) throws Exception {
+        Path outputPath = resolveFilePath(localPath);
         if (outputPath.getParent() != null) {
             Files.createDirectories(outputPath.getParent());
         }
-
-        try (OutputStream out = Files.newOutputStream(outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-            while (chunks.hasNext()) {
-                FileChunk chunk = chunks.next();
-                out.write(chunk.getData().toByteArray());
-            }
+        
+        OutputStream out = Files.newOutputStream(outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        while (chunksIt.hasNext()) {
+            FileChunk chunk = chunksIt.next();
+            out.write(chunk.getData().toByteArray());
         }
+        out.close();
     }
 
     

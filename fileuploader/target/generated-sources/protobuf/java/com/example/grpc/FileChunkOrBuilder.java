@@ -9,19 +9,11 @@ public interface FileChunkOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <pre>
-   * only needed in first chunk
-   * </pre>
-   *
    * <code>string filename = 1;</code>
    * @return The filename.
    */
   java.lang.String getFilename();
   /**
-   * <pre>
-   * only needed in first chunk
-   * </pre>
-   *
    * <code>string filename = 1;</code>
    * @return The bytes for filename.
    */

@@ -17,6 +17,8 @@ import com.example.grpc.UploadStatus;
 
 public class FileServiceImpl extends FileServiceGrpc.FileServiceImplBase {
 
+    private static final int BUFFER_SIZE = 64 * 1024;
+
     @Override
     public StreamObserver<FileChunk> upload(StreamObserver<UploadStatus> responseObserver) {
 
@@ -25,7 +27,7 @@ public class FileServiceImpl extends FileServiceGrpc.FileServiceImplBase {
             String filename;
 
             @Override
-            public void onNext(FileChunk chunk) {
+            public void onNext( final FileChunk chunk) {
                 try {
                     if (out == null) {
                         filename = chunk.getFilename();
@@ -70,11 +72,11 @@ public class FileServiceImpl extends FileServiceGrpc.FileServiceImplBase {
     @Override
     public void download(FileRequest request, StreamObserver<FileChunk> responseObserver) {
         try (InputStream in = new FileInputStream(request.getFilename())) {
-            byte[] buffer = new byte[64 * 1024];
-            int n;
-            while ((n = in.read(buffer)) != -1) {
+            byte[] buffer = new byte[BUFFER_SIZE];
+            int bytesRead;
+            while ( (bytesRead = in.read( buffer )) != -1 ) {
                 FileChunk chunk = FileChunk.newBuilder()
-                        .setData(ByteString.copyFrom(buffer, 0, n))
+                        .setData(ByteString.copyFrom(buffer, 0, bytesRead))
                         .build();
                 responseObserver.onNext(chunk);
             }

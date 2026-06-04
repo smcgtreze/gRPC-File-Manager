@@ -45,10 +45,6 @@ private static final long serialVersionUID = 0L;
   @SuppressWarnings("serial")
   private volatile java.lang.Object filename_ = "";
   /**
-   * <pre>
-   * only needed in first chunk
-   * </pre>
-   *
    * <code>string filename = 1;</code>
    * @return The filename.
    */
@@ -66,10 +62,6 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <pre>
-   * only needed in first chunk
-   * </pre>
-   *
    * <code>string filename = 1;</code>
    * @return The bytes for filename.
    */
@@ -450,10 +442,6 @@ private static final long serialVersionUID = 0L;
 
     private java.lang.Object filename_ = "";
     /**
-     * <pre>
-     * only needed in first chunk
-     * </pre>
-     *
      * <code>string filename = 1;</code>
      * @return The filename.
      */
@@ -470,10 +458,6 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <pre>
-     * only needed in first chunk
-     * </pre>
-     *
      * <code>string filename = 1;</code>
      * @return The bytes for filename.
      */
@@ -491,10 +475,6 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <pre>
-     * only needed in first chunk
-     * </pre>
-     *
      * <code>string filename = 1;</code>
      * @param value The filename to set.
      * @return This builder for chaining.
@@ -508,10 +488,6 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <pre>
-     * only needed in first chunk
-     * </pre>
-     *
      * <code>string filename = 1;</code>
      * @return This builder for chaining.
      */
@@ -522,10 +498,6 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <pre>
-     * only needed in first chunk
-     * </pre>
-     *
      * <code>string filename = 1;</code>
      * @param value The bytes for filename to set.
      * @return This builder for chaining.

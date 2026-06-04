@@ -17,13 +17,36 @@ import io.grpc.stub.StreamObserver;
 
 public class ClientUpload {
 
+    private static final int BUFFER_SIZE = 64 * 1024;
+    private static final int TIMEOUT = 10;
     private static final Path UPLOADS_DIR = Paths.get("uploads");
 
     public void uploadFile(FileServiceGrpc.FileServiceStub asyncStub, String path) throws Exception {
         CountDownLatch finishLatch = new CountDownLatch(1);
         AtomicReference<Throwable> errorRef = new AtomicReference<>();
 
-        StreamObserver<UploadStatus> responseObserver = new StreamObserver<>() {
+        StreamObserver<UploadStatus> responseObserver = buildResponseObserver(finishLatch, errorRef);
+        StreamObserver<FileChunk> requestObserver = asyncStub.upload(responseObserver);
+
+        try{
+            uploadFile(path, requestObserver);
+        } catch (Exception exception) {
+            requestObserver.onError(exception);
+            throw exception;
+        }
+        requestObserver.onCompleted();
+
+        if (!finishLatch.await(TIMEOUT, TimeUnit.MINUTES)) {
+            throw new RuntimeException("Upload did not complete within " + TIMEOUT + " minutes. Aborting...");
+        }
+        if (errorRef.get() != null) {
+            throw new RuntimeException("Upload failed", errorRef.get());
+        }
+    }
+
+    private StreamObserver<UploadStatus> buildResponseObserver(CountDownLatch finishLatch,
+            AtomicReference<Throwable> errorRef) {
+        return new StreamObserver<>() {
             @Override public void onNext(UploadStatus status) {
                 System.out.println("Server: " + status.getMessage());
             }
@@ -36,32 +59,28 @@ public class ClientUpload {
                 finishLatch.countDown();
             }
         };
-
-        StreamObserver<FileChunk> requestObserver = asyncStub.upload(responseObserver);
-
-    try (InputStream in = new FileInputStream(path)) {
-            byte[] buffer = new byte[64 * 1024];
-            boolean first = true;
-            int n;
-            String outputPath = UPLOADS_DIR.resolve(new File(path).getName()).toString();
-            while ((n = in.read(buffer)) != -1) {
-                FileChunk chunk = FileChunk.newBuilder()
-                        .setData(ByteString.copyFrom(buffer, 0, n))
-                        .setFilename(first ? outputPath : "")
-                        .build();
-                first = false;
-                requestObserver.onNext(chunk);
-            }
-        }
-    requestObserver.onCompleted();
-
-        if (!finishLatch.await(10, TimeUnit.MINUTES)) {
-            throw new RuntimeException("Upload did not complete within 1 minute");
-        }
-        if (errorRef.get() != null) {
-            throw new RuntimeException("Upload failed", errorRef.get());
-        }
+    }
+    
+    final String resolveFilePath(String path) {
+        return UPLOADS_DIR.resolve(new File(path).getName()).toString();
     }
 
-    
+    void uploadFile( final String path, final StreamObserver<FileChunk> requestObserver) throws Exception {
+        InputStream inputStream = new FileInputStream(path);
+        
+        byte[] buffer = new byte[BUFFER_SIZE];
+        boolean first = true;
+        int bytesRead;
+        String outputPath = resolveFilePath(path);
+            
+        while ((bytesRead = inputStream.read(buffer)) != -1) {
+            FileChunk chunk = FileChunk.newBuilder()
+                    .setData(ByteString.copyFrom(buffer, 0, bytesRead))
+                    .setFilename(first ? outputPath : "")
+                    .build();
+            first = false;
+            requestObserver.onNext(chunk);
+        }
+        inputStream.close();
+    }
 }
