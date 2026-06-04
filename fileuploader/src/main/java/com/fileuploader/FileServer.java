@@ -4,8 +4,16 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
 public class FileServer {
+    static final int DEFAULT_PORT = 50051;
     public static void main(String[] args) throws Exception {
-        final int port = 50051;
+        int port;
+        if (args.length < 1) {
+            System.out.println("Usage: java -jar fileServer.jar port. Defaulting to port " + DEFAULT_PORT);
+            port = DEFAULT_PORT;
+        } else {
+            port = Integer.parseInt(args[0]);
+        }
+
         Server server = ServerBuilder.forPort(port)
                 .addService(new FileServiceImpl())
                 .build()
